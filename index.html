@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DB2 SQL Editor</title>
+    <style>
+        :root {
+            /* Theme variables */
+            --primary-color: #0066FF;
+            --bg-color: #1E1E1E;
+            --text-color: #CCCCCC;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --input-bg: #252526;
+            --button-bg: var(--primary-color);
+            --button-fg: #FFFFFF;
+            --button-hover-bg: #0055DD;
+            --table-header-bg: #2D2D2D;
+            --table-row-bg: #1E1E1E;
+            --table-row-alt-bg: #252526;
+            --dropdown-bg: #2D2D2D;
+            --dropdown-hover-bg: #3D3D3D;
+            --error-color: #F44336;
+            --success-color: #4CAF50;
+        }
+        
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Header Bar */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .connection-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+        
+        .connection-info span {
+            opacity: 0.8;
+        }
+        
+        .connection-info strong {
+            opacity: 1;
+        }
+        
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .connection-selector {
+            padding: 6px 12px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        
+        .toolbar-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        /* Buttons */
+        button {
+            padding: 6px 16px;
+            background-color: var(--button-bg);
+            color: var(--button-fg);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: var(--button-hover-bg);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Dropdown */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-button {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .dropdown-button:hover {
+            background-color: var(--dropdown-hover-bg);
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: var(--dropdown-bg);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .dropdown-content a {
+            color: var(--text-color);
+            padding: 10px 16px;
+            text-decoration: none;
+            display: block;
+            cursor: pointer;
+        }
+        
+        .dropdown-content a:hover {
+            background-color: var(--dropdown-hover-bg);
+        }
+        
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        
+        /* Editor Container */
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+        
+        #sqlEditor {
+            flex: 1;
+            padding: 12px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: none;
+            resize: none;
+            outline: none;
+        }
+        
+        .resize-handle {
+            height: 6px;
+            background-color: var(--border-color);
+            cursor: ns-resize;
+            position: relative;
+        }
+        
+        .resize-handle::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 2px;
+            background-color: var(--text-color);
+            opacity: 0.5;
+        }
+        
+        /* Results Container */
+        .results-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .results-toolbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+        }
+        
+        .results-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .results-info {
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .results-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .search-container input {
+            padding: 6px 12px;
+            padding-left: 36px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+        
+        .results-content {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+        }
+        
+        /* Table Styling */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .results-table th {
+            background-color: var(--table-header-bg);
+            padding: 10px 16px;
+            text-align: left;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .results-table td {
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .results-table tr:nth-child(even) {
+            background-color: var(--table-row-alt-bg);
+        }
+        
+        .results-table tr:nth-child(odd) {
+            background-color: var(--table-row-bg);
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background-color: var(--bg-color);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .pagination-info {
+            font-size: 0.9em;
+        }
+        
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .pagination-button {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .pagination-button:hover:not(:disabled) {
+            background-color: var(--dropdown-hover-bg);
+        }
+        
+        .items-per-page {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 16px;
+        }
+        
+        .items-per-page select {
+            padding: 4px 8px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        /* Error and Loading */
+        .error-message {
+            color: var(--error-color);
+            padding: 16px;
+            margin: 16px;
+            border: 1px solid var(--error-color);
+            border-radius: 4px;
+            background-color: rgba(244, 67, 54, 0.1);
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        
+        .toast.success {
+            background-color: var(--success-color);
+        }
+        
+        .toast.error {
+            background-color: var(--error-color);
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        /* Utility Classes */
+        .hidden {
+            display: none;
+        }
+        
+        /* Icons with filter for dark mode */
+        .icon {
+            filter: invert(100%) brightness(200%);
+            width: 16px;
+            height: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Bar -->
+        <div class="header-bar">
+            <div class="connection-info">
+                <span>Database:</span>
+                <strong id="connectionPath">Not connected</strong>
+            </div>
+        </div>
+        
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <select id="connectionSelector" class="connection-selector">
+                <option value="">Select a connection...</option>
+            </select>
+            
+            <div class="toolbar-actions">
+                <div class="dropdown">
+                    <button class="dropdown-button">Save</button>
+                    <div class="dropdown-content">
+                        <a id="saveDdl">Save as .ddl</a>
+                        <a id="saveDb2Ddl">Save as .db2.ddl</a>
+                        <a id="saveSql">Save as .sql</a>
+                        <a id="saveDb2Sql">Save as .db2.sql</a>
+                    </div>
+                </div>
+                
+                <button id="executeButton">Run</button>
+            </div>
+        </div>
+        
+        <!-- Editor Container -->
+        <div class="editor-container">
+            <textarea id="sqlEditor" placeholder="Enter SQL query here..."></textarea>
+            <div class="resize-handle" id="resizeHandle"></div>
+        </div>
+        
+        <!-- Results Container -->
+        <div class="results-container" id="resultsContainer">
+            <div class="results-toolbar">
+                <div class="results-left">
+                    <div class="search-container">
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15 14.3L10.7 10C11.5 9 12 7.8 12 6.5C12 3.5 9.5 1 6.5 1S1 3.5 1 6.5 3.5 12 6.5 12c1.3 0 2.5-.5 3.5-1.3l4.3 4.3 .7-.7zM6.5 11c-2.5 0-4.5-2-4.5-4.5S4 2 6.5 2 11 4 11 6.5 9 11 6.5 11z" fill="currentColor"/>
+                        </svg>
+                        <input type="text" id="searchResults" placeholder="Search result set...">
+                    </div>
+                    <div class="results-info" id="resultsInfo"></div>
+                </div>
+                <div class="results-actions">
+                    <div class="dropdown">
+                        <button class="dropdown-button">Export</button>
+                        <div class="dropdown-content">
+                            <a id="exportCsvButton">Export to CSV</a>
+                            <a id="exportJsonButton">Export to JSON</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-content" id="resultsContent"></div>
+            
+            <div class="pagination">
+                <div class="items-per-page">
+                    <span>Items per page:</span>
+                    <select id="itemsPerPage">
+                        <option value="6">6</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                
+                <div class="pagination-info" id="paginationInfo">1-0 of 0 items</div>
+                
+                <div class="pagination-controls">
+                    <button class="pagination-button" id="prevPage" disabled>◀</button>
+                    <button class="pagination-button" id="nextPage" disabled>▶</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div class="toast" id="toast"></div>
+    </div>
+    
+    <script>
+        (function() {
+            const vscode = acquireVsCodeApi();
+            let currentConnectionId = '';
+            let lastResults = null;
+            let currentPage = 1;
+            let itemsPerPageValue = 6;
+            let filteredRows = [];
+            
+            // DOM elements
+            const connectionSelector = document.getElementById('connectionSelector');
+            const connectionPath = document.getElementById('connectionPath');
+            const sqlEditor = document.getElementById('sqlEditor');
+            const executeButton = document.getElementById('executeButton');
+            const resizeHandle = document.getElementById('resizeHandle');
+            const resultsInfo = document.getElementById('resultsInfo');
+            const resultsContent = document.getElementById('resultsContent');
+            const exportCsvButton = document.getElementById('exportCsvButton');
+            const exportJsonButton = document.getElementById('exportJsonButton');
+            const searchResults = document.getElementById('searchResults');
+            const itemsPerPage = document.getElementById('itemsPerPage');
+            const paginationInfo = document.getElementById('paginationInfo');
+            const prevPage = document.getElementById('prevPage');
+            const nextPage = document.getElementById('nextPage');
+            const toast = document.getElementById('toast');
+            
+            // Save buttons
+            const saveDdl = document.getElementById('saveDdl');
+            const saveDb2Ddl = document.getElementById('saveDb2Ddl');
+            const saveSql = document.getElementById('saveSql');
+            const saveDb2Sql = document.getElementById('saveDb2Sql');
+            
+            // Event listeners
+            connectionSelector.addEventListener('change', () => {
+                currentConnectionId = connectionSelector.value;
+                vscode.postMessage({
+                    command: 'changeConnection',
+                    connectionId: currentConnectionId
+                });
+                
+                executeButton.disabled = !currentConnectionId;
+                
+                // Update connection info in header
+                const selectedOption = connectionSelector.options[connectionSelector.selectedIndex];
+                if (selectedOption && selectedOption.value) {
+                    const connText = selectedOption.textContent;
+                    const dbMatch = connText.match(/\(([^@]+)@/);
+                    const nameMatch = connText.match(/^([^(]+)/);
+                    
+                    if (dbMatch && dbMatch[1] && nameMatch && nameMatch[1]) {
+                        const dbName = dbMatch[1];
+                        const connName = nameMatch[1].trim();
+                        // Format as connectionName/SchemaName
+                        connectionPath.textContent = `${connName}/${dbName}`;
+                    } else {
+                        connectionPath.textContent = 'Not connected';
+                    }
+                } else {
+                    connectionPath.textContent = 'Not connected';
+                }
+            });
+            
+            executeButton.addEventListener('click', executeQuery);
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                // Ctrl+Enter to execute query
+                if (e.ctrlKey && e.key === 'Enter') {
+                    executeQuery();
+                    e.preventDefault();
+                }
+                
+                // Ctrl+S to save query
+                if (e.ctrlKey && e.key === 's') {
+                    // Default to .sql format
+                    saveQuery('.sql');
+                    e.preventDefault();
+                }
+            });
+            
+            function executeQuery() {
+                const query = sqlEditor.value.trim();
+                if (!query) {
+                    showToast('Please enter a SQL query', 'error');
+                    return;
+                }
+                
+                if (!currentConnectionId) {
+                    showToast('Please select a connection', 'error');
+                    return;
+                }
+                
+                vscode.postMessage({
+                    command: 'executeQuery',
+                    connectionId: currentConnectionId,
+                    query
+                });
+            }
+            
+            // Save query with different formats
+            saveDdl.addEventListener('click', () => saveQuery('.ddl'));
+            saveDb2Ddl.addEventListener('click', () => saveQuery('.db2.ddl'));
+            saveSql.addEventListener('click', () => saveQuery('.sql'));
+            saveDb2Sql.addEventListener('click', () => saveQuery('.db2.sql'));
+            
+            function saveQuery(format) {
+                const query = sqlEditor.value.trim();
+                if (!query) {
+                    showToast('Nothing to save', 'error');
+                    return;
+                }
+                
+                vscode.postMessage({
+                    command: 'saveQuery',
+                    content: query,
+                    format: format
+                });
+                
+                showToast(`Query saved as ${format}`, 'success');
+            }
+            
+            // Export results
+            exportCsvButton.addEventListener('click', () => {
+                if (!lastResults || lastResults.rowCount === 0) {
+                    showToast('No results to export', 'error');
+                    return;
+                }
+                
+                vscode.postMessage({
+                    command: 'exportResults',
+                    format: 'csv'
+                });
+                
+                showToast('Results exported to CSV', 'success');
+            });
+            
+            exportJsonButton.addEventListener('click', () => {
+                if (!lastResults || lastResults.rowCount === 0) {
+                    showToast('No results to export', 'error');
+                    return;
+                }
+                
+                vscode.postMessage({
+                    command: 'exportResults',
+                    format: 'json'
+                });
+                
+                showToast('Results exported to JSON', 'success');
+            });
+            
+            // Search functionality
+            searchResults.addEventListener('input', () => {
+                if (!lastResults) return;
+                
+                const searchTerm = searchResults.value.toLowerCase();
+                
+                if (!searchTerm) {
+                    // If search is cleared, show all results
+                    filteredRows = lastResults.rows;
+                } else {
+                    // Filter rows based on search term
+                    filteredRows = lastResults.rows.filter(row => {
+                        return row.some(cell => {
+                            if (cell === null || cell === undefined) return false;
+                            return String(cell).toLowerCase().includes(searchTerm);
+                        });
+                    });
+                }
+                
+                // Reset to first page and update display
+                currentPage = 1;
+                updateResultsTable();
+            });
+            
+            // Pagination
+            itemsPerPage.addEventListener('change', () => {
+                itemsPerPageValue = parseInt(itemsPerPage.value, 10);
+                currentPage = 1;
+                updateResultsTable();
+            });
+            
+            prevPage.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateResultsTable();
+                }
+            });
+            
+            nextPage.addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredRows.length / itemsPerPageValue);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updateResultsTable();
+                }
+            });
+            
+            // Resize handle for editor
+            let startY, startHeight;
+            
+            resizeHandle.addEventListener('mousedown', (e) => {
+                startY = e.clientY;
+                startHeight = parseInt(document.defaultView.getComputedStyle(sqlEditor).height, 10);
+                document.documentElement.addEventListener('mousemove', doDrag, false);
+                document.documentElement.addEventListener('mouseup', stopDrag, false);
+            });
+            
+            function doDrag(e) {
+                const newHeight = startHeight + e.clientY - startY;
+                if (newHeight > 100) { // Minimum height
+                    sqlEditor.style.height = newHeight + 'px';
+                }
+            }
+            
+            function stopDrag() {
+                document.documentElement.removeEventListener('mousemove', doDrag, false);
+                document.documentElement.removeEventListener('mouseup', stopDrag, false);
+            }
+            
+            // Handle messages from the extension
+            window.addEventListener('message', event => {
+                const message = event.data;
+                
+                switch (message.command) {
+                    case 'updateConnections':
+                        updateConnectionList(message.connections, message.currentConnectionId);
+                        break;
+                        
+                    case 'queryStarted':
+                        showLoading();
+                        break;
+                        
+                    case 'queryResults':
+                        showResults(message.results);
+                        break;
+                        
+                    case 'queryError':
+                        showError(message.error);
+                        break;
+                        
+                    case 'setEditorContent':
+                        sqlEditor.value = message.content;
+                        break;
+                }
+            });
+            
+            // Update connection dropdown
+            function updateConnectionList(connections, selectedConnectionId) {
+                // Clear existing options
+                while (connectionSelector.options.length > 0) {
+                    connectionSelector.remove(0);
+                }
+                
+                if (connections.length === 0) {
+                    // Add placeholder option if no connections
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'No active connections';
+                    option.disabled = true;
+                    connectionSelector.appendChild(option);
+                    executeButton.disabled = true;
+                    connectionPath.textContent = 'Not connected';
+                    return;
+                }
+                
+                // Add options for each connection
+                connections.forEach(conn => {
+                    const option = document.createElement('option');
+                    option.value = conn.id;
+                    option.textContent = `${conn.name} (${conn.database}@${conn.host})`;
+                    connectionSelector.appendChild(option);
+                });
+                
+                // Select the specified connection or the first one
+                if (selectedConnectionId) {
+                    connectionSelector.value = selectedConnectionId;
+                    currentConnectionId = selectedConnectionId;
+                } else if (connections.length > 0) {
+                    connectionSelector.value = connections[0].id;
+                    currentConnectionId = connections[0].id;
+                }
+                
+                executeButton.disabled = !currentConnectionId;
+                
+                // Update connection info in header
+                if (currentConnectionId) {
+                    const selectedConn = connections.find(conn => conn.id === currentConnectionId);
+                    if (selectedConn) {
+                        // Format as connectionName/SchemaName
+                        connectionPath.textContent = `${selectedConn.name}/${selectedConn.database}`;
+                    }
+                }
+            }
+            
+            // Show loading indicator
+            function showLoading() {
+                resultsContent.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>Executing query...</span>
+                    </div>
+                `;
+                resultsInfo.textContent = '';
+            }
+            
+            // Show query results
+            function showResults(results) {
+                lastResults = results;
+                
+                if (results.hasError) {
+                    showError(results.errorMessage);
+                    return;
+                }
+                
+                // Update results info
+                resultsInfo.textContent = `${results.rowCount} rows in ${results.executionTime}ms`;
+                
+                // Set filtered rows to all rows initially
+                filteredRows = results.rows;
+                currentPage = 1;
+                
+                // Clear search
+                searchResults.value = '';
+                
+                // Update the table
+                updateResultsTable();
+                
+                // Show success toast
+                showToast('Query executed successfully', 'success');
+            }
+            
+            // Update results table with pagination
+            function updateResultsTable() {
+                if (!lastResults || !filteredRows) return;
+                
+                const startIndex = (currentPage - 1) * itemsPerPageValue;
+                const endIndex = Math.min(startIndex + itemsPerPageValue, filteredRows.length);
+                const pageRows = filteredRows.slice(startIndex, endIndex);
+                
+                // Create table
+                let tableHtml = '<table class="results-table"><thead><tr>';
+                
+                // Add headers
+                lastResults.columns.forEach(column => {
+                    tableHtml += `<th>${escapeHtml(column)}</th>`;
+                });
+                
+                tableHtml += '</tr></thead><tbody>';
+                
+                // Add rows
+                pageRows.forEach(row => {
+                    tableHtml += '<tr>';
+                    row.forEach(cell => {
+                        tableHtml += `<td>${formatCell(cell)}</td>`;
+                    });
+                    tableHtml += '</tr>';
+                });
+                
+                tableHtml += '</tbody></table>';
+                resultsContent.innerHTML = tableHtml;
+                
+                // Update pagination info
+                const totalPages = Math.ceil(filteredRows.length / itemsPerPageValue);
+                paginationInfo.textContent = filteredRows.length > 0 
+                    ? `${startIndex + 1}-${endIndex} of ${filteredRows.length} items` 
+                    : '0 items';
+                
+                // Update pagination buttons
+                prevPage.disabled = currentPage <= 1;
+                nextPage.disabled = currentPage >= totalPages;
+            }
+            
+            // Show error message
+            function showError(message) {
+                resultsContent.innerHTML = `<div class="error-message">${escapeHtml(message)}</div>`;
+                resultsInfo.textContent = 'Error';
+                showToast('Query execution failed', 'error');
+            }
+            
+            // Show toast notification
+            function showToast(message, type) {
+                toast.textContent = message;
+                toast.className = `toast ${type}`;
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Format cell value for display
+            function formatCell(value) {
+                if (value === null || value === undefined) {
+                    return '<em>NULL</em>';
+                }
+                
+                return escapeHtml(String(value));
+            }
+            
+            // Escape HTML special characters
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        })();
+    </script>
+</body>
