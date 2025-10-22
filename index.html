@@ -12,9 +12,48 @@
     <link rel="stylesheet" href="https://unpkg.com/carbon-components/css/carbon-components.min.css" />
 
     <style>
+      /* Theme tokens */
       :root {
-        --page-bg: #161616; /* g100 background */
-        --container-bg: #262626; /* Layer background */
+        /* Dark as default */
+        --page-bg: #161616;
+        --container-bg: #262626;
+        --text-primary: #f4f4f4;
+        --text-secondary: #c6c6c6;
+        --border-color: #262626;
+        --muted-bg: #262626;
+        --table-header-bg: #393939;
+        --table-row-bg: var(--container-bg);
+        --table-row-alt-bg: #2d2d2d;
+        --input-bg: #262626;
+      }
+
+      :root[data-theme="light"] {
+        --page-bg: #f4f4f4;
+        --container-bg: #ffffff;
+        --text-primary: #161616;
+        --text-secondary: #525252;
+        --border-color: #e0e0e0;
+        --muted-bg: #f4f4f4;
+        --table-header-bg: #f4f4f4;
+        --table-row-bg: #ffffff;
+        --table-row-alt-bg: #f9f9f9;
+        --input-bg: #ffffff;
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root:not([data-theme="dark"]) { 
+          /* Honor system light when explicit dark not set */
+          --page-bg: #f4f4f4;
+          --container-bg: #ffffff;
+          --text-primary: #161616;
+          --text-secondary: #525252;
+          --border-color: #e0e0e0;
+          --muted-bg: #f4f4f4;
+          --table-header-bg: #f4f4f4;
+          --table-row-bg: #ffffff;
+          --table-row-alt-bg: #f9f9f9;
+          --input-bg: #ffffff;
+        }
       }
 
       html, body { height: 100%; }
@@ -22,23 +61,21 @@
       body {
         margin: 0;
         background: var(--page-bg);
-        color: #f4f4f4;
+        color: var(--text-primary);
         font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
         overflow: hidden;
       }
 
       .app-shell { display: flex; flex-direction: column; height: 100vh; }
 
-      /* Header spacing uses Carbon grid but with larger x padding */
-      .app-header { border-bottom: 1px solid #262626; padding: 0 2rem; }
+      /* Top toolbar */
+      .toolbar { border-bottom: 1px solid var(--border-color); background: var(--page-bg); padding: 0.5rem 2rem; }
 
-      .toolbar { border-bottom: 1px solid #262626; background: var(--page-bg); padding: 0.5rem 2rem; }
-
-      .editor-container { display: flex; flex-direction: column; min-height: 160px; border-bottom: 1px solid #262626; }
+      .editor-container { display: flex; flex-direction: column; min-height: 160px; border-bottom: 1px solid var(--border-color); }
 
       #sqlEditor {
         background: var(--container-bg);
-        color: #f4f4f4;
+        color: var(--text-primary);
         border: none;
         outline: none;
         resize: none;
@@ -49,76 +86,51 @@
         min-height: 220px;
       }
 
-      .resize-handle { height: 6px; background: #262626; cursor: ns-resize; }
+      .resize-handle { height: 6px; background: var(--border-color); cursor: ns-resize; }
 
       .results-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
       .results-toolbar {
         background: var(--page-bg);
-        border-bottom: 1px solid #262626;
+        border-bottom: 1px solid var(--border-color);
         padding: 0.5rem 2rem;
         display: flex; align-items: center; justify-content: space-between; gap: 1rem;
       }
 
       .results-content { flex: 1; overflow: auto; }
 
-      .pagination-area { background: var(--page-bg); border-top: 1px solid #262626; padding: 0.25rem 2rem; }
+      .pagination-area { background: var(--page-bg); border-top: 1px solid var(--border-color); padding: 0.25rem 2rem; }
 
+      /* Data table dark/light adjustments */
       .bx--data-table-container { background: var(--page-bg); }
+      .bx--data-table { background: var(--container-bg); color: var(--text-primary); }
+      .bx--data-table thead th { background: var(--table-header-bg); color: var(--text-primary); border-bottom: 1px solid var(--border-color); }
+      .bx--data-table tbody td { background: var(--table-row-bg); border-top: 1px solid var(--border-color); }
+      .bx--data-table--zebra tbody tr:nth-child(odd) td { background-color: var(--table-row-alt-bg); }
+      .bx--data-table tbody tr:hover td { background-color: rgba(255,255,255,0.08); }
+
+      /* Search/input styles for themes */
+      .bx--search .bx--search-input { background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--border-color); }
+      .bx--search .bx--search-input::placeholder { color: var(--text-secondary); }
+      .bx--search .bx--search-close { color: var(--text-secondary); }
     </style>
   </head>
   <body>
     <div class="app-shell">
-      <!-- Header -->
-      <header class="app-header">
-        <div class="bx--grid bx--grid--full-width">
-          <div class="bx--row" style="padding: .75rem 0; align-items:center;">
-            <div class="bx--col">
-              <div class="bx--type-productive-heading-01" style="color:#c6c6c6;">Database</div>
-              <div id="connectionPath" class="bx--type-code-01" style="color:#f4f4f4;">Not connected</div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- Toolbar -->
+      <!-- Unified Toolbar (path + actions) -->
       <div class="toolbar">
         <div class="bx--grid bx--grid--full-width">
-          <div class="bx--row" style="align-items:center; gap:1rem;">
-            <div class="bx--col-lg-8 bx--col-md-6 bx--col-sm-4">
-              <div class="bx--form-item">
-                <label for="connectionSelector" class="bx--label bx--type-code-01">Connection</label>
-                <div class="bx--select bx--select--inline" style="width:100%; max-width: 560px;">
-                  <label for="connectionSelector" class="bx--label">Select</label>
-                  <div class="bx--select-input__wrapper">
-                    <select id="connectionSelector" class="bx--select-input">
-                      <option value="">Select a connection…</option>
-                    </select>
-                    <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bx--select__arrow" width="16" height="16" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"></path></svg>
-                  </div>
-                </div>
-              </div>
+          <div class="bx--row" style="align-items:center; justify-content:space-between; gap:1rem;">
+            <div class="bx--col" style="min-width:0;">
+              <div id="connectionPath" class="bx--type-code-01" style="color: var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Not connected</div>
             </div>
 
             <div class="bx--col" style="display:flex; justify-content:flex-end; gap:.5rem;">
-              <!-- Save overflow menu -->
-              <div class="bx--overflow-menu" data-overflow-menu role="button" aria-haspopup="true" aria-expanded="false" tabindex="0" title="Save">
-                <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-label="Save menu" width="20" height="20" viewBox="0 0 32 32"><path d="M28 10.1l-6.1-6.1h-15.9v24h22zM10 6h10v6h-10zM26 26h-20v-20h2v8h14v-8h1.6l2.4 2.4z"></path></svg>
-                <ul class="bx--overflow-menu-options bx--overflow-menu--flip">
-                  <li class="bx--overflow-menu-options__option">
-                    <button class="bx--overflow-menu-options__btn" id="saveDdl" title="Save as .ddl"><span class="bx--overflow-menu-options__option-content">Save as .ddl</span></button>
-                  </li>
-                  <li class="bx--overflow-menu-options__option">
-                    <button class="bx--overflow-menu-options__btn" id="saveDb2Ddl" title="Save as .db2.ddl"><span class="bx--overflow-menu-options__option-content">Save as .db2.ddl</span></button>
-                  </li>
-                  <li class="bx--overflow-menu-options__option">
-                    <button class="bx--overflow-menu-options__btn" id="saveSql" title="Save as .sql"><span class="bx--overflow-menu-options__option-content">Save as .sql</span></button>
-                  </li>
-                  <li class="bx--overflow-menu-options__option">
-                    <button class="bx--overflow-menu-options__btn" id="saveDb2Sql" title="Save as .db2.sql"><span class="bx--overflow-menu-options__option-content">Save as .db2.sql</span></button>
-                  </li>
-                </ul>
-              </div>
+              <!-- Save .sql only -->
+              <button id="saveSqlButton" class="bx--btn bx--btn--secondary" title="Save as .sql">
+                Save
+                <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="16" height="16" viewBox="0 0 32 32" aria-hidden="true" style="margin-left:.25rem"><path d="M28 10.1l-6.1-6.1H6v24h22zM10 6h10v6H10zM26 26H8V6h2v8h14V6h1.6L28 8.4z"></path></svg>
+              </button>
 
               <!-- Run button -->
               <button id="executeButton" class="bx--btn bx--btn--primary">
@@ -142,13 +154,16 @@
           <div style="display:flex; align-items:center; gap:1rem;">
             <div class="bx--search bx--search--sm" role="search">
               <div class="bx--search-magnifier" aria-hidden="true">
-                <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="16" height="16" viewBox="0 0 32 32" aria-hidden="true"><path d="M29.71 28.29l-6.94-6.94A11.91 11.91 0 1024 24.77l6.94 6.94zM13 22a9 9 0 119-9A9 9 0 0113 22z"></path></svg>
+                <!-- Carbon Search icon (refined) -->
+                <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="16" height="16" viewBox="0 0 32 32" aria-hidden="true">
+                  <path d="M29.71 28.29l-7.4-7.4A11.93 11.93 0 1013 25.94 11.82 11.82 0 0021.6 23l7.4 7.4zM13 23A10 10 0 1123 13 10 10 0 0113 23z"></path>
+                </svg>
               </div>
               <label id="searchResults-label" class="bx--label">Search results</label>
               <input class="bx--search-input" type="text" id="searchResults" role="searchbox" placeholder="Search result set" aria-labelledby="searchResults-label" />
               <button class="bx--search-close" id="searchClearBtn" title="Clear search" aria-label="Clear search"></button>
             </div>
-            <div id="resultsInfo" class="bx--type-code-01" style="color:#c6c6c6"></div>
+            <div id="resultsInfo" class="bx--type-code-01" style="color: var(--text-secondary)"></div>
           </div>
 
           <div style="display:flex; align-items:center; gap:.5rem;">
@@ -217,10 +232,10 @@
         let filteredRows = [];
 
         // DOM
-        const connectionSelector = document.getElementById('connectionSelector');
         const connectionPath = document.getElementById('connectionPath');
         const sqlEditor = document.getElementById('sqlEditor');
         const executeButton = document.getElementById('executeButton');
+        const saveSqlButton = document.getElementById('saveSqlButton');
         const resizeHandle = document.getElementById('resizeHandle');
         const resultsInfo = document.getElementById('resultsInfo');
         const resultsContent = document.getElementById('resultsContent');
@@ -234,32 +249,17 @@
         const nextPage = document.getElementById('nextPage');
         const toastArea = document.getElementById('toastArea');
 
-        // Save menu items
-        const saveDdl = document.getElementById('saveDdl');
-        const saveDb2Ddl = document.getElementById('saveDb2Ddl');
-        const saveSql = document.getElementById('saveSql');
-        const saveDb2Sql = document.getElementById('saveDb2Sql');
-
-        connectionSelector.addEventListener('change', () => {
-          currentConnectionId = connectionSelector.value;
-          vscode.postMessage({ command: 'changeConnection', connectionId: currentConnectionId });
-          executeButton.disabled = !currentConnectionId;
-          const option = connectionSelector.options[connectionSelector.selectedIndex];
-          if (option && option.value) {
-            const connText = option.textContent || '';
-            const dbMatch = connText.match(/\(([^@]+)@/);
-            const nameMatch = connText.match(/^([^()]+)/);
-            if (dbMatch && dbMatch[1] && nameMatch && nameMatch[1]) {
-              const dbName = dbMatch[1];
-              const connName = nameMatch[1].trim();
-              connectionPath.textContent = `${connName}/${dbName}`;
-            } else {
-              connectionPath.textContent = 'Not connected';
-            }
-          } else {
-            connectionPath.textContent = 'Not connected';
-          }
-        });
+        // Theme: follow VS Code class or system setting
+        function applyPreferredTheme() {
+          const isDark = document.body.classList.contains('vscode-dark') ||
+            document.body.classList.contains('vscode-high-contrast') ||
+            (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        }
+        applyPreferredTheme();
+        if (window.matchMedia) {
+          try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyPreferredTheme); } catch (_) {}
+        }
 
         executeButton.addEventListener('click', executeQuery);
 
@@ -267,6 +267,9 @@
           if (e.ctrlKey && e.key === 'Enter') { executeQuery(); e.preventDefault(); }
           if (e.ctrlKey && (e.key === 's' || e.key === 'S')) { saveQuery('.sql'); e.preventDefault(); }
         });
+
+        // Save .sql only
+        saveSqlButton.addEventListener('click', () => saveQuery('.sql'));
 
         // Search
         if (searchClearBtn) {
@@ -308,10 +311,6 @@
           vscode.postMessage({ command: 'saveQuery', content: query, format });
           showToast(`Query saved as ${format}`, 'success');
         }
-        saveDdl.addEventListener('click', () => saveQuery('.ddl'));
-        saveDb2Ddl.addEventListener('click', () => saveQuery('.db2.ddl'));
-        saveSql.addEventListener('click', () => saveQuery('.sql'));
-        saveDb2Sql.addEventListener('click', () => saveQuery('.db2.sql'));
 
         exportCsvButton.addEventListener('click', () => {
           if (!lastResults || lastResults.rowCount === 0) { showToast('No results to export', 'error'); return; }
@@ -327,7 +326,7 @@
         function executeQuery() {
           const query = sqlEditor.value.trim();
           if (!query) { showToast('Please enter a SQL query', 'error'); return; }
-          if (!currentConnectionId) { showToast('Please select a connection', 'error'); return; }
+          if (!currentConnectionId) { showToast('No active connection', 'error'); return; }
           vscode.postMessage({ command: 'executeQuery', connectionId: currentConnectionId, query });
         }
 
@@ -337,6 +336,11 @@
           switch (message.command) {
             case 'updateConnections':
               updateConnectionList(message.connections || [], message.currentConnectionId);
+              break;
+            case 'setTheme':
+              if (message.theme === 'light' || message.theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', message.theme);
+              }
               break;
             case 'queryStarted':
               showLoading();
@@ -354,21 +358,20 @@
         });
 
         function updateConnectionList(connections, selectedConnectionId) {
-          while (connectionSelector.options.length > 0) connectionSelector.remove(0);
           if (!connections || connections.length === 0) {
-            const option = document.createElement('option'); option.value = ''; option.textContent = 'No active connections'; option.disabled = true; connectionSelector.appendChild(option);
-            executeButton.disabled = true; connectionPath.textContent = 'Not connected'; return;
+            currentConnectionId = '';
+            executeButton.disabled = true;
+            connectionPath.textContent = 'Not connected';
+            return;
           }
-          connections.forEach((conn) => {
-            const option = document.createElement('option'); option.value = conn.id; option.textContent = `${conn.name} (${conn.database}@${conn.host})`; connectionSelector.appendChild(option);
-          });
-          if (selectedConnectionId) { connectionSelector.value = selectedConnectionId; currentConnectionId = selectedConnectionId; }
-          else if (connections.length > 0) { connectionSelector.value = connections[0].id; currentConnectionId = connections[0].id; }
+          if (selectedConnectionId) {
+            currentConnectionId = selectedConnectionId;
+          } else {
+            currentConnectionId = connections[0].id;
+          }
           executeButton.disabled = !currentConnectionId;
-          if (currentConnectionId) {
-            const selectedConn = connections.find((c) => c.id === currentConnectionId);
-            if (selectedConn) connectionPath.textContent = `${selectedConn.name}/${selectedConn.database}`;
-          }
+          const selectedConn = connections.find((c) => c.id === currentConnectionId);
+          if (selectedConn) connectionPath.textContent = `${selectedConn.name}/${selectedConn.database}`;
         }
 
         function showLoading() {
