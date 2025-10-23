@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Db2 Connection</title>
+    <style>
+        @font-face {
+            font-family: 'IBM Plex Sans';
+            src: url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 14px;
+            background-color: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
+            padding: 0;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 32px 24px 24px 24px;
+            overflow-y: auto;
+            max-width: 800px;
+            margin: 0;
+            width: 100%;
+        }
+        
+        h1 {
+            color: var(--vscode-editor-foreground);
+            font-size: 14px;
+            font-weight: 400;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+        
+        .form-section {
+            margin-bottom: 24px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        .form-group.full-width {
+            width: 100%;
+        }
+        
+        label {
+            color: var(--vscode-descriptionForeground);
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 400;
+        }
+        
+        input[type="text"], 
+        input[type="number"], 
+        input[type="password"], 
+        textarea, 
+        select {
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: none;
+            border-bottom: 1px solid var(--vscode-input-border);
+            height: 40px;
+            padding: 0 16px;
+            font-size: 14px;
+            font-family: inherit;
+            width: 100%;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="password"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: 2px solid var(--vscode-focusBorder);
+            outline-offset: -2px;
+            border-bottom: 1px solid var(--vscode-focusBorder);
+        }
+        
+        input.error,
+        select.error {
+            border: 1px solid var(--vscode-errorForeground);
+            background-color: rgba(255, 0, 0, 0.05);
+        }
+        
+        .error-message {
+            color: var(--vscode-errorForeground);
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        
+        .error-message.visible {
+            display: block;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            padding: 12px 16px;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 24px;
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+        
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        input[type="radio"] {
+            margin: 0;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--vscode-button-background);
+            cursor: pointer;
+        }
+        
+        .radio-item label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--vscode-editor-foreground);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+        
+        input[type="checkbox"] {
+            margin: 0;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--vscode-button-background);
+            cursor: pointer;
+        }
+        
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--vscode-editor-foreground);
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: var(--vscode-panel-border);
+            margin: 32px 0;
+            width: 100%;
+        }
+        
+        .security-section {
+            margin-top: 32px;
+        }
+        
+        .security-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--vscode-editor-foreground);
+        }
+        
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-color: var(--vscode-dropdown-background);
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 11L3 6L4.4 4.6L8 8.2L11.6 4.6L13 6L8 11Z" fill="%23f4f4f4"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+
+        select::-ms-expand {
+            display: none;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background-color: var(--vscode-editor-background);
+            border-top: 1px solid var(--vscode-panel-border);
+            position: sticky;
+            bottom: 0;
+            gap: 8px;
+        }
+        
+        .btn {
+            padding: 0 64px;
+            height: 48px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            font-weight: 400;
+            font-family: 'IBM Plex Sans', sans-serif;
+            transition: all 0.11s cubic-bezier(0.2, 0, 0.38, 0.9);
+            white-space: nowrap;
+        }
+        
+        .btn-test {
+            background-color: var(--vscode-disabledForeground);
+            color: var(--vscode-disabledForeground);
+            pointer-events: none;
+            padding: 0 24px;
+            height: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .btn-test.enabled {
+            background-color: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            pointer-events: auto;
+        }
+        
+        .btn-test.enabled:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+        
+        .btn-create {
+            background-color: var(--vscode-disabledForeground);
+            color: var(--vscode-disabledForeground);
+            pointer-events: none;
+        }
+        
+        .btn-create.enabled {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            pointer-events: auto;
+        }
+        
+        .btn-create.enabled:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+        
+        .btn-cancel {
+            background-color: transparent;
+            color: var(--vscode-button-background);
+            pointer-events: auto;
+            padding: 0 24px;
+        }
+        
+        .btn-cancel:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+        
+        .number-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .number-input-wrapper input {
+            padding-right: 64px;
+        }
+        
+        .number-controls {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            background-color: var(--vscode-input-background);
+            border-left: 1px solid var(--vscode-panel-border);
+        }
+        
+        .number-control-btn {
+            width: 32px;
+            height: 40px;
+            background: transparent;
+            border: none;
+            color: var(--vscode-editor-foreground);
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.11s;
+        }
+        
+        .number-control-btn:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+        
+        .password-wrapper {
+            position: relative;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--vscode-descriptionForeground);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle:hover {
+            color: var(--vscode-editor-foreground);
+        }
+        
+        .success-message {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: var(--vscode-testing-iconPassed);
+            margin-top: 16px;
+            font-size: 14px;
+        }
+        
+        .success-message.visible {
+            display: flex;
+        }
+        
+        .success-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .success-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        
+        .test-connection-section {
+            margin-top: 32px;
+        }
+
+        .test-connection-section p {
+            font-size: 14px;
+            color: var(--vscode-descriptionForeground);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        
+        .login-fields {
+            display: contents;
+        }
+        
+        .login-fields.hidden {
+            display: none !important;
+        }
+        
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            margin-top: 4px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--vscode-editor-background);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        input:checked + .slider {
+            background-color: var(--vscode-button-background);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .form-group.toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+            justify-content: flex-start;
+        }
+
+        .form-group.toggle-group label {
+            margin: 0;
+            font-size: 13px;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <h1>Enter your Db2 connection details to access and manage your database.</h1>
+        
+        <div class="form-section">
+            <!-- Connection type selection removed -->
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="host">Host</label>
+                    <input type="text" id="host" placeholder="192.168.1.100">
+                    <div id="host-error" class="error-message">Please enter a valid host address</div>
+                </div>
+                <div class="form-group">
+                    <label for="port">Port</label>
+                    <div class="number-input-wrapper">
+                        <input type="number" id="port" value="50000">
+                        <div class="number-controls">
+                            <button class="number-control-btn" id="port-decrement" type="button" aria-label="Decrement port">−</button>
+                            <button class="number-control-btn" id="port-increment" type="button" aria-label="Increment port">+</button>
+                        </div>
+                    </div>
+                    <div id="port-error" class="error-message">Please enter a valid port number</div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="databaseName">Database</label>
+                    <input type="text" id="databaseName" placeholder="MyDatabase">
+                    <div id="database-error" class="error-message">Please enter a valid database name</div>
+                </div>
+                <div class="form-group">
+                    <label for="connectionName">Connection name (optional)</label>
+                    <input type="text" id="connectionName" placeholder="192.168.1.100">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="connectionUrl">Connection URL</label>
+                    <textarea id="connectionUrl" placeholder="Auto-generated connection URL" readonly aria-readonly="true"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="security-section">
+            <div class="security-title">Authentication</div>
+            
+            <div class="form-row" style="display: none;">
+                <div class="form-group full-width">
+                    <label>Login method</label>
+                    <div class="radio-group" role="radiogroup" aria-labelledby="login-method-label">
+                        <span id="login-method-label" class="visually-hidden">Select login method</span>
+                        <div class="radio-item">
+                            <input type="radio" id="password" name="loginMethod" value="password" checked>
+                            <label for="password">Password</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="passticket" name="loginMethod" value="passticket">
+                            <label for="passticket">PassTicket</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="mfatoken" name="loginMethod" value="mfatoken">
+                            <label for="mfatoken">MFA token</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="userId">Username</label>
+                    <input type="text" id="userId" placeholder="admin">
+                    <div id="username-error" class="error-message">Please enter a valid username</div>
+                </div>
+                <div class="form-group">
+                    <label for="passwordInput">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="passwordInput" placeholder="Enter password">
+                        <button class="password-toggle" type="button" aria-label="Toggle password visibility" id="password-toggle-btn">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M15.5,7.8C14.3,4.7,11.3,2.6,8,2.5C4.7,2.6,1.7,4.7,0.5,7.8c-0.1,0.3-0.1,0.6,0,0.9c1.2,3.1,4.1,5.2,7.5,5.3c3.4-0.1,6.3-2.2,7.5-5.3C15.6,8.4,15.6,8.1,15.5,7.8z M8,12.5c-2.7,0-5-2.2-5-5c0-2.7,2.2-5,5-5s5,2.2,5,5C13,10.3,10.7,12.5,8,12.5z M8,4.5C6.1,4.5,4.5,6.1,4.5,8c0,1.9,1.6,3.5,3.5,3.5s3.5-1.6,3.5-3.5C11.5,6.1,9.9,4.5,8,4.5z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="password-error" class="error-message">Please enter a valid password</div>
+                </div>
+            </div>
+            
+            <div id="passticket-fields" class="login-fields hidden">
+                <div class="form-group">
+                    <label for="userIdPassticket">User ID *</label>
+                    <input type="text" id="userIdPassticket" placeholder="Valid Db2 user ID">
+                </div>
+                <div class="form-group">
+                    <label for="passticketInput">PassTicket</label>
+                    <input type="text" id="passticketInput" placeholder="PassTicket for the Db2 user ID">
+                </div>
+            </div>
+
+            <div id="mfa-fields" class="login-fields hidden">
+                <div class="form-group">
+                    <label for="userIdMfa">User ID *</label>
+                    <input type="text" id="userIdMfa" placeholder="Valid Db2 user ID">
+                </div>
+                <div class="form-group full-width">
+                    <div class="form-group toggle-group">
+                        <label for="useWithoutPass">Use without a pass</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="useWithoutPass">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group" id="mfa-password-field">
+                    <label for="passwordMfa">Password</label>
+                    <input type="password" id="passwordMfa" placeholder="Password for the Db2 user ID">
+                </div>
+                <div class="form-group">
+                    <label for="mfaToken">MFA token</label>
+                    <input type="text" id="mfaToken" placeholder="MFA token">
+                </div>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="savePassword">
+                <label for="savePassword">Save credentials</label>
+            </div>
+        </div>
+        
+        <div class="test-connection-section">
+            <h2 class="security-title">Test connection</h2>
+            <p>You must verify the credentials are correct by successfully testing the connection.</p>
+            
+            <button id="test-connection-btn" class="btn btn-test">Test connection</button>
+            
+            <div id="success-message" class="success-message">
+                <span class="success-icon">
+                    <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm3.7 6.5l-4.2 4.2c-.2.2-.5.3-.7.3-.3 0-.5-.1-.7-.3l-2.1-2.1c-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0l1.4 1.4 3.5-3.5c.4-.4 1-.4 1.4 0 .4.4.4 1 0 1.4z" fill="currentColor"/>
+                    </svg>
+                </span>
+                <span>Connection tested successfully</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="actions">
+        <button id="cancel-button" class="btn btn-cancel">Cancel</button>
+        <button id="finish-button" class="btn btn-create">Create connection</button>
+    </div>
+
+    <div style="display: none;">
+        <input type="text" id="category">
+        <input type="checkbox" id="favorite">
+        <input type="checkbox" id="enableTrace">
+        <select id="tuningServer"><option value="">Select</option></select>
+        <input type="checkbox" id="enableTuningProfile">
+        <select id="tuningProfile"><option value="">Select</option></select>
+    </div>
+    
+    <script>
+        const vscode = acquireVsCodeApi();
+        
+        // Password toggle functionality
+        document.getElementById('password-toggle-btn').addEventListener('click', function() {
+            const passwordInput = document.getElementById('passwordInput');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+            } else {
+                passwordInput.type = 'password';
+            }
+        });
+        
+        // Cancel button handler
+        document.getElementById('cancel-button').addEventListener('click', () => {
+            if (vscode) {
+                vscode.postMessage({
+                    command: 'cancelForm'
+                });
+            }
+        });
+        
+        // Test connection button
+        document.getElementById('test-connection-btn').addEventListener('click', () => {
+            if (!document.getElementById('test-connection-btn').classList.contains('enabled')) {
+                return;
+            }
+            
+            const loginMethodEl = document.querySelector('input[name="loginMethod"]:checked');
+            const currentMethod = loginMethodEl ? loginMethodEl.value : 'password';
+            
+            let connectionData = {
+                host: document.getElementById('host').value,
+                port: parseInt(document.getElementById('port').value, 10),
+                database: document.getElementById('databaseName').value,
+                status: 'connected'
+            };
+            
+            // Add method-specific data
+            if (currentMethod === 'password') {
+                connectionData.username = document.getElementById('userId').value;
+                connectionData.password = document.getElementById('passwordInput').value;
+                connectionData.userId = document.getElementById('userId').value;
+            } else if (currentMethod === 'passticket') {
+                connectionData.username = document.getElementById('userIdPassticket').value;
+                connectionData.passticket = document.getElementById('passticketInput').value;
+                connectionData.userId = document.getElementById('userIdPassticket').value;
+            } else if (currentMethod === 'mfatoken') {
+                connectionData.username = document.getElementById('userIdMfa').value;
+                connectionData.useWithoutPass = document.getElementById('useWithoutPass').checked;
+                connectionData.mfaToken = document.getElementById('mfaToken').value;
+                connectionData.userId = document.getElementById('userIdMfa').value;
+                if (!connectionData.useWithoutPass) {
+                    connectionData.password = document.getElementById('passwordMfa').value;
+                }
+            }
+            
+            // Send test connection message to extension
+            if (vscode) {
+                vscode.postMessage({
+                    command: 'testConnection',
+                    connectionData: connectionData,
+                    showSchemaBrowser: true
+                });
+                
+                // We'll show the success message when we get a response from the extension
+                // For now, show it immediately for better user feedback
+                document.getElementById('success-message').classList.add('visible');
+            }
+        });
+        
+        // Don't run validation on initial load
+        // checkFormValidity();
+
+        // Form validation and button enabling
+        function checkFormValidity() {
+            const loginMethodEl = document.querySelector('input[name="loginMethod"]:checked');
+            const currentMethod = loginMethodEl ? loginMethodEl.value : 'password';
+            
+            let requiredFields = [
+                { field: document.getElementById('databaseName'), errorId: 'database-error' },
+                { field: document.getElementById('host'), errorId: 'host-error' },
+                { field: document.getElementById('port'), errorId: 'port-error' }
+            ];
+
+            // Add method-specific required fields
+            if (currentMethod === 'password') {
+                requiredFields.push(
+                    { field: document.getElementById('userId'), errorId: 'username-error' },
+                    { field: document.getElementById('passwordInput'), errorId: 'password-error' }
+                );
+            } else if (currentMethod === 'passticket') {
+                requiredFields.push(
+                    { field: document.getElementById('userIdPassticket'), errorId: 'userIdPassticket-error' },
+                    { field: document.getElementById('passticketInput'), errorId: 'passticket-error' }
+                );
+            } else if (currentMethod === 'mfatoken') {
+                requiredFields.push(
+                    { field: document.getElementById('userIdMfa'), errorId: 'userIdMfa-error' },
+                    { field: document.getElementById('mfaToken'), errorId: 'mfaToken-error' }
+                );
+                // Add password field if not using without pass
+                const useWithoutPass = document.getElementById('useWithoutPass');
+                if (useWithoutPass && !useWithoutPass.checked) {
+                    requiredFields.push({ field: document.getElementById('passwordMfa'), errorId: 'passwordMfa-error' });
+                }
+            }
+            
+            // Validate each field and show/hide error messages
+            let allValid = true;
+            
+            requiredFields.forEach(item => {
+                if (item.field) {
+                    const isValid = validateField(item.field);
+                    const errorElement = document.getElementById(item.errorId);
+                    
+                    if (!isValid) {
+                        allValid = false;
+                        item.field.classList.add('error');
+                        if (errorElement) errorElement.classList.add('visible');
+                    } else {
+                        item.field.classList.remove('error');
+                        if (errorElement) errorElement.classList.remove('visible');
+                    }
+                }
+            });
+            
+            const finishButton = document.getElementById('finish-button');
+            const testButton = document.getElementById('test-connection-btn');
+            
+            if (allValid) {
+                if (finishButton) finishButton.classList.add('enabled');
+                if (testButton) testButton.classList.add('enabled');
+            } else {
+                if (finishButton) finishButton.classList.remove('enabled');
+                if (testButton) testButton.classList.remove('enabled');
+            }
+        }
+        
+        // Validate individual field
+        function validateField(field) {
+            if (!field) return false;
+            
+            // Check if the field has been interacted with
+            if (!field.dataset.interacted) {
+                return true; // Consider valid if not interacted with yet
+            }
+            
+            const value = field.value.trim();
+            const id = field.id;
+            
+            // Basic validation - check if field is not empty
+            if (value === '') return false;
+            
+            // Specific validation rules for different fields
+            switch (id) {
+                case 'host':
+                    // Simple host validation - could be enhanced for proper hostname/IP validation
+                    return value.length > 0;
+                    
+                case 'port':
+                    // Port should be a number between 1 and 65535
+                    const port = parseInt(value, 10);
+                    return !isNaN(port) && port >= 1 && port <= 65535;
+                    
+                case 'databaseName':
+                    // Database name should not be empty
+                    return value.length > 0;
+                    
+                case 'userId':
+                case 'userIdPassticket':
+                case 'userIdMfa':
+                    // Username should not be empty
+                    return value.length > 0;
+                    
+                case 'passwordInput':
+                case 'passwordMfa':
+                    // If there's a saved password (indicated by placeholder), consider it valid
+                    if (field.getAttribute('data-has-saved-password') === 'true' && value === '') {
+                        return true;
+                    }
+                    // Otherwise, password should not be empty
+                    return value.length > 0;
+                    
+                default:
+                    // Default validation - just check if not empty
+                    return value.length > 0;
+            }
+        }
+
+        // Add event listeners to form fields for real-time validation
+        document.addEventListener('input', function(event) {
+            // If the changed element is an input field, validate it immediately
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT') {
+                const field = event.target;
+                // Mark field as interacted with
+                field.dataset.interacted = 'true';
+                
+                const errorId = field.id + '-error';
+                const errorElement = document.getElementById(errorId);
+                
+                const isValid = validateField(field);
+                
+                if (!isValid) {
+                    field.classList.add('error');
+                    if (errorElement) errorElement.classList.add('visible');
+                } else {
+                    field.classList.remove('error');
+                    if (errorElement) errorElement.classList.remove('visible');
+                }
+            }
+            
+            // Check overall form validity
+            checkFormValidity();
+        });
+        
+        // Mark fields as interacted with on blur (when user leaves the field)
+        document.addEventListener('focusout', function(event) {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT') {
+                const field = event.target;
+                field.dataset.interacted = 'true';
+                
+                // Validate the field
+                const errorId = field.id + '-error';
+                const errorElement = document.getElementById(errorId);
+                
+                const isValid = validateField(field);
+                
+                if (!isValid) {
+                    field.classList.add('error');
+                    if (errorElement) errorElement.classList.add('visible');
+                } else {
+                    field.classList.remove('error');
+                    if (errorElement) errorElement.classList.remove('visible');
+                }
+                
+                // Check overall form validity
+                checkFormValidity();
+            }
+        }, true);
+        
+        document.addEventListener('change', checkFormValidity);
+
+        // Auto-generate connection URL
+        function updateConnectionUrl() {
+            const host = document.getElementById('host').value;
+            const port = document.getElementById('port').value;
+            const databaseName = document.getElementById('databaseName').value;
+            const connectionUrlEl = document.getElementById('connectionUrl');
+            
+            if (host && port && databaseName && connectionUrlEl) {
+                const url = `jdbc:db2://${host}:${port}/${databaseName}`;
+                connectionUrlEl.value = url;
+            } else if (connectionUrlEl) {
+                connectionUrlEl.value = '';
+            }
+        }
+
+        // Add event listeners for URL generation
+        const hostEl = document.getElementById('host');
+        const portEl = document.getElementById('port');
+        const databaseNameEl = document.getElementById('databaseName');
+        
+        if (hostEl) hostEl.addEventListener('input', updateConnectionUrl);
+        if (portEl) portEl.addEventListener('input', updateConnectionUrl);
+        if (databaseNameEl) databaseNameEl.addEventListener('input', updateConnectionUrl);
+
+        // Port increment/decrement buttons
+        const portIncrementBtn = document.getElementById('port-increment');
+        const portDecrementBtn = document.getElementById('port-decrement');
+        const portInput = document.getElementById('port');
+        
+        if (portIncrementBtn && portInput) {
+            portIncrementBtn.addEventListener('click', () => {
+                portInput.value = parseInt(portInput.value, 10) + 1;
+                updateConnectionUrl();
+                checkFormValidity();
+            });
+        }
+        
+        if (portDecrementBtn && portInput) {
+            portDecrementBtn.addEventListener('click', () => {
+                portInput.value = Math.max(1, parseInt(portInput.value, 10) - 1);
+                updateConnectionUrl();
+                checkFormValidity();
+            });
+        }
+
+        // Save connection button
+        document.getElementById('finish-button').addEventListener('click', () => {
+            if (!document.getElementById('finish-button').classList.contains('enabled')) {
+                return;
+            }
+
+            const loginMethodEl = document.querySelector('input[name="loginMethod"]:checked');
+            const currentMethod = loginMethodEl ? loginMethodEl.value : 'password';
+            
+            let profileData = {
+                name: document.getElementById('connectionName').value,
+                host: document.getElementById('host').value,
+                port: parseInt(document.getElementById('port').value, 10),
+                database: document.getElementById('databaseName').value,
+                loginMethod: currentMethod,
+                connectionUrl: document.getElementById('connectionUrl').value,
+                savePassword: document.getElementById('savePassword').checked,
+                enableTrace: document.getElementById('enableTrace').checked,
+                enableTuningProfile: document.getElementById('enableTuningProfile').checked,
+                category: document.getElementById('category').value,
+                favorite: document.getElementById('favorite').checked,
+                tuningServer: document.getElementById('tuningServer').value,
+                tuningProfile: document.getElementById('tuningProfile').value,
+                status: 'connected' // Add connection status
+            };
+
+            // Add method-specific data
+            if (currentMethod === 'password') {
+                profileData.username = document.getElementById('userId').value;
+                profileData.password = document.getElementById('passwordInput').value;
+                // Store userId for reconnection
+                profileData.userId = document.getElementById('userId').value;
+            } else if (currentMethod === 'passticket') {
+                profileData.username = document.getElementById('userIdPassticket').value;
+                profileData.passticket = document.getElementById('passticketInput').value;
+                // Store userId for reconnection
+                profileData.userId = document.getElementById('userIdPassticket').value;
+            } else if (currentMethod === 'mfatoken') {
+                profileData.username = document.getElementById('userIdMfa').value;
+                profileData.useWithoutPass = document.getElementById('useWithoutPass').checked;
+                profileData.mfaToken = document.getElementById('mfaToken').value;
+                // Store userId for reconnection
+                profileData.userId = document.getElementById('userIdMfa').value;
+                if (!profileData.useWithoutPass) {
+                    profileData.password = document.getElementById('passwordMfa').value;
+                }
+            }
+            
+            // Show success message to indicate connection is established
+            document.getElementById('success-message').classList.add('visible');
+            
+            if (vscode) {
+                vscode.postMessage({
+                    command: 'saveProfile',
+                    profileData: profileData,
+                    connect: true // Add flag to indicate connection should be established
+                });
+            } else {
+                console.log('Profile data:', profileData);
+                alert('Connection saved successfully!');
+            }
+        });
+
+        // Handle profile data from the extension
+        window.addEventListener('message', event => {
+            const message = event.data;
+            
+            if (message.command === 'setProfileData') {
+                const profile = message.profile;
+                
+                // Set basic connection information
+                document.getElementById('connectionName').value = profile.connectionName || profile.name || '';
+                document.getElementById('host').value = profile.host || '';
+                document.getElementById('port').value = profile.port || 50000;
+                document.getElementById('databaseName').value = profile.databaseName || profile.database || '';
+                
+                // Set security information
+                document.getElementById('useSSL').checked = profile.useSSL || false;
+                
+                // Set login credentials
+                document.getElementById('userId').value = profile.userId || profile.username || '';
+                
+                // Don't set default password value - leave it empty for security reasons
+                // Instead, use a placeholder to indicate if a password is saved
+                const passwordInput = document.getElementById('passwordInput');
+                if (profile.savePassword) {
+                    // Visual indication that a password is saved without revealing it
+                    passwordInput.placeholder = "••••••••• (saved)";
+                    // Set a data attribute that can be used by JavaScript to know a password exists
+                    // This helps with form validation and connection testing
+                    passwordInput.setAttribute('data-has-saved-password', 'true');
+                } else {
+                    // No saved password, show normal placeholder
+                    passwordInput.placeholder = "Enter password";
+                    passwordInput.removeAttribute('data-has-saved-password');
+                }
+                
+                // Set save password option
+                document.getElementById('savePassword').checked = profile.savePassword || false;
+                
+                // Update the connection URL
+                updateConnectionUrl();
+                
+                // Update form validation
+                checkFormValidity();
+                
+                // If this is an existing connection with saved credentials, enable the buttons
+                if (profile.savePassword && profile.userId) {
+                    document.getElementById('test-connection-btn').classList.add('enabled');
+                    document.getElementById('finish-button').classList.add('enabled');
+                }
+                
+                // If we're editing an existing connection, change the button text
+                if (profile.id || profile._id) {
+                    document.getElementById('finish-button').textContent = "Update connection";
+                }
+            }
+            
+            // Handle connection test response
+            if (message.command === 'connectionTestResult') {
+                if (message.success) {
+                    document.getElementById('success-message').classList.add('visible');
+                    
+                    // Clear any error states when connection is successful
+                    const errorFields = document.querySelectorAll('.error');
+                    errorFields.forEach(field => field.classList.remove('error'));
+                    
+                    const errorMessages = document.querySelectorAll('.error-message.visible');
+                    errorMessages.forEach(msg => msg.classList.remove('visible'));
+                } else {
+                    document.getElementById('success-message').classList.remove('visible');
+                    
+                    // Show error messages based on the error type
+                    if (message.error) {
+                        // Handle specific error types
+                        if (message.error.includes('authentication')) {
+                            // Authentication error - highlight username and password
+                            const userIdField = document.getElementById('userId');
+                            const passwordField = document.getElementById('passwordInput');
+                            const userIdError = document.getElementById('username-error');
+                            const passwordError = document.getElementById('password-error');
+                            
+                            if (userIdField) userIdField.classList.add('error');
+                            if (passwordField) passwordField.classList.add('error');
+                            
+                            if (userIdError) {
+                                userIdError.textContent = 'Invalid username or password';
+                                userIdError.classList.add('visible');
+                            }
+                            
+                            if (passwordError) {
+                                passwordError.textContent = 'Invalid username or password';
+                                passwordError.classList.add('visible');
+                            }
+                        } else if (message.error.includes('connect')) {
+                            // Connection error - highlight host and port
+                            const hostField = document.getElementById('host');
+                            const portField = document.getElementById('port');
+                            const hostError = document.getElementById('host-error');
+                            const portError = document.getElementById('port-error');
+                            
+                            if (hostField) hostField.classList.add('error');
+                            if (portField) portField.classList.add('error');
+                            
+                            if (hostError) {
+                                hostError.textContent = 'Could not connect to host';
+                                hostError.classList.add('visible');
+                            }
+                            
+                            if (portError) {
+                                portError.textContent = 'Could not connect on this port';
+                                portError.classList.add('visible');
+                            }
+                        } else if (message.error.includes('database')) {
+                            // Database error
+                            const databaseField = document.getElementById('databaseName');
+                            const databaseError = document.getElementById('database-error');
+                            
+                            if (databaseField) databaseField.classList.add('error');
+                            
+                            if (databaseError) {
+                                databaseError.textContent = 'Database not found or access denied';
+                                databaseError.classList.add('visible');
+                            }
+                        }
+                    }
+                }
+            }
+        });
