@@ -53,6 +53,7 @@
             display: flex;
             gap: 16px;
             margin-bottom: 16px;
+            flex-wrap: wrap;
         }
         
         .form-group {
@@ -466,6 +467,14 @@
         input[type="number"] {
             -moz-appearance: textfield;
         }
+
+        /* Responsive layout */
+        @media (max-width: 720px) {
+            .form-row { flex-direction: column; }
+            .actions { flex-direction: column-reverse; align-items: stretch; }
+            .btn { width: 100%; }
+            .btn-test { margin-bottom: 0; }
+        }
     </style>
 </head>
 <body>
@@ -502,14 +511,14 @@
                 </div>
                 <div class="form-group">
                     <label for="connectionName">Connection name (optional)</label>
-                    <input type="text" id="connectionName" placeholder="192.168.1.100">
+                    <input type="text" id="connectionName" placeholder="MyDb2Connection" data-optional="true">
                 </div>
             </div>
             
             <div class="form-row">
                 <div class="form-group full-width">
                     <label for="connectionUrl">Connection URL</label>
-                    <textarea id="connectionUrl" placeholder="Auto-generated connection URL" readonly aria-readonly="true"></textarea>
+                    <input type="text" id="connectionUrl" placeholder="Auto-generated connection URL" readonly aria-readonly="true">
                 </div>
             </div>
         </div>
@@ -633,7 +642,7 @@
     </div>
     
     <script>
-        const vscode = acquireVsCodeApi();
+        const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : null;
         
         // Password toggle functionality
         document.getElementById('password-toggle-btn').addEventListener('click', function() {
@@ -696,10 +705,6 @@
                     connectionData: connectionData,
                     showSchemaBrowser: true
                 });
-                
-                // We'll show the success message when we get a response from the extension
-                // For now, show it immediately for better user feedback
-                document.getElementById('success-message').classList.add('visible');
             }
         });
         
@@ -825,22 +830,25 @@
         // Add event listeners to form fields for real-time validation
         document.addEventListener('input', function(event) {
             // If the changed element is an input field, validate it immediately
-            if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT') {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' || event.target.tagName === 'TEXTAREA') {
                 const field = event.target;
                 // Mark field as interacted with
                 field.dataset.interacted = 'true';
                 
                 const errorId = field.id + '-error';
                 const errorElement = document.getElementById(errorId);
+                const isOptional = field.hasAttribute('data-optional') || field.readOnly === true;
                 
                 const isValid = validateField(field);
                 
-                if (!isValid) {
-                    field.classList.add('error');
-                    if (errorElement) errorElement.classList.add('visible');
-                } else {
-                    field.classList.remove('error');
-                    if (errorElement) errorElement.classList.remove('visible');
+                if (errorElement && !isOptional) {
+                    if (!isValid) {
+                        field.classList.add('error');
+                        errorElement.classList.add('visible');
+                    } else {
+                        field.classList.remove('error');
+                        errorElement.classList.remove('visible');
+                    }
                 }
             }
             
@@ -850,22 +858,25 @@
         
         // Mark fields as interacted with on blur (when user leaves the field)
         document.addEventListener('focusout', function(event) {
-            if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT') {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' || event.target.tagName === 'TEXTAREA') {
                 const field = event.target;
                 field.dataset.interacted = 'true';
                 
                 // Validate the field
                 const errorId = field.id + '-error';
                 const errorElement = document.getElementById(errorId);
+                const isOptional = field.hasAttribute('data-optional') || field.readOnly === true;
                 
                 const isValid = validateField(field);
                 
-                if (!isValid) {
-                    field.classList.add('error');
-                    if (errorElement) errorElement.classList.add('visible');
-                } else {
-                    field.classList.remove('error');
-                    if (errorElement) errorElement.classList.remove('visible');
+                if (errorElement && !isOptional) {
+                    if (!isValid) {
+                        field.classList.add('error');
+                        errorElement.classList.add('visible');
+                    } else {
+                        field.classList.remove('error');
+                        errorElement.classList.remove('visible');
+                    }
                 }
                 
                 // Check overall form validity
@@ -925,6 +936,9 @@
             if (!document.getElementById('finish-button').classList.contains('enabled')) {
                 return;
             }
+
+            // Ensure URL is up-to-date before saving
+            updateConnectionUrl();
 
             const loginMethodEl = document.querySelector('input[name="loginMethod"]:checked');
             const currentMethod = loginMethodEl ? loginMethodEl.value : 'password';
@@ -997,7 +1011,10 @@
                 document.getElementById('databaseName').value = profile.databaseName || profile.database || '';
                 
                 // Set security information
-                document.getElementById('useSSL').checked = profile.useSSL || false;
+                const useSSLEl = document.getElementById('useSSL');
+                if (useSSLEl) {
+                    useSSLEl.checked = profile.useSSL || false;
+                }
                 
                 // Set login credentials
                 document.getElementById('userId').value = profile.userId || profile.username || '';
